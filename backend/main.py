@@ -12,6 +12,7 @@ from typing import Annotated, Literal
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from groq import APIConnectionError, APIError, AuthenticationError, Groq, RateLimitError
 from pydantic import BaseModel, Field, StringConstraints
@@ -20,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env")
 
 # Confira os modelos disponíveis em console.groq.com e ajuste GROQ_MODEL se necessário.
-MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
 MAX_TOKENS = 1600
 MAX_HISTORY = 20  # últimas mensagens enviadas ao modelo
 
@@ -75,7 +76,16 @@ _api_key = os.getenv("GROQ_API_KEY", "").strip()
 client: Groq | None = Groq(api_key=_api_key, timeout=60.0, max_retries=2) if _api_key else None
 
 app = FastAPI(title="FinanTech AI", docs_url="/api/docs", openapi_url="/api/openapi.json")
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://finantech-ai-uh4e.onrender.com",
+        "http://localhost:5173",
+    ],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type"],
+)
 
 @app.get("/api/health")
 def health() -> dict[str, object]:
